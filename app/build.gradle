@@ -10,7 +10,7 @@ android {
         applicationId 'com.gipaplay.android'
         minSdk 23
         targetSdk 35
-        versionCode (System.getenv('GITHUB_RUN_NUMBER') ?: '2').toInteger() + 100
+        versionCode = (System.getenv('GITHUB_RUN_NUMBER') ?: '2').toInteger() + 100
         versionName '1.1'
     }
     signingConfigs {
