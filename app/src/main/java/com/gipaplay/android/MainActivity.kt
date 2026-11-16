@@ -3,6 +3,7 @@ package com.gipaplay.android
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Bundle
@@ -87,6 +88,8 @@ class MainActivity : Activity() {
                     View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                 )
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                // Pantalla completa: fuerza horizontal (permite girar entre las dos orientaciones horizontales)
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             }
 
             override fun onHideCustomView() = hideCustomView()
@@ -119,6 +122,8 @@ class MainActivity : Activity() {
         customView = null
         root.addView(webView, FrameLayout.LayoutParams(-1, -1))
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // Al salir de pantalla completa vuelve a la orientación automática
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         @Suppress("DEPRECATION")
         window.decorView.systemUiVisibility = oldUi
         val callback = customCallback
