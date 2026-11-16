@@ -10,8 +10,20 @@ android {
         applicationId 'com.gipaplay.android'
         minSdk 23
         targetSdk 35
-        versionCode 2
+        versionCode (System.getenv('GITHUB_RUN_NUMBER') ?: '2').toInteger() + 100
         versionName '1.1'
+    }
+    signingConfigs {
+        gipaplay {
+            storeFile file('gipaplay.jks')
+            storePassword 'gipaplay123'
+            keyAlias 'gipaplay'
+            keyPassword 'gipaplay123'
+        }
+    }
+    buildTypes {
+        debug { signingConfig signingConfigs.gipaplay }
+        release { signingConfig signingConfigs.gipaplay }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
