@@ -21,6 +21,18 @@ import kotlin.math.roundToInt
 
 class MainActivity : Activity() {
     private val homeUrl = "https://gipa-play.vercel.app"
+    private val BACK_JS = """
+        (function(){
+          window.gipaBack = function(){
+            try{
+              if(typeof __fsActivo==='function' && __fsActivo()){ __fsSalir(); return true; }
+              if(typeof modal!=='undefined' && modal.classList.contains('open')){ cerrarModal(); return true; }
+              if(typeof panelModo!=='undefined' && panelModo){ cerrarPanel(); marcarNav('home'); return true; }
+            }catch(e){}
+            return false;
+          };
+        })();
+    """.trimIndent()
     private lateinit var webView: WebView
     private lateinit var root: FrameLayout
     private lateinit var audio: AudioManager
@@ -62,6 +74,12 @@ class MainActivity : Activity() {
         webView.addJavascriptInterface(AndroidControls(), "AndroidControls")
 
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                // Define window.gipaBack(): cierra pantalla completa simulada, detalle o panel y devuelve true si cerró algo.
+                view?.evaluateJavascript(BACK_JS, null)
+            }
+
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val uri = request?.url ?: return false
                 val host = uri.host ?: return false
@@ -133,10 +151,14 @@ class MainActivity : Activity() {
 
     @Deprecated("Deprecated in Android API")
     override fun onBackPressed() {
-        when {
-            customView != null -> hideCustomView()
-            webView.canGoBack() -> webView.goBack()
-            else -> super.onBackPressed()
+        if (customView != null) { hideCustomView(); return }
+        // Primero deja que la web cierre lo que tenga abierto (detalle, búsqueda/lista, pantalla completa simulada)
+        webView.evaluateJavascript("(function(){return window.gipaBack ? window.gipaBack() : false;})()") { r ->
+            when {
+                r == "true" -> Unit
+                webView.canGoBack() -> webView.goBack()
+                else -> finish()
+            }
         }
     }
 
