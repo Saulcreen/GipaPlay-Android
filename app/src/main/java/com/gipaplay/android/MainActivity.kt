@@ -7,6 +7,7 @@ import android.content.pm.ActivityInfo
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.view.WindowManager
 import android.webkit.CookieManager
@@ -137,6 +138,16 @@ class MainActivity : Activity() {
                 params.screenBrightness = percent.coerceIn(1, 100) / 100f
                 window.attributes = params
             }
+        }
+
+        /** Brillo real actual del dispositivo (0-100). Si la app no lo ha cambiado, lee el brillo del sistema. */
+        @JavascriptInterface
+        fun getBrightness(): Int {
+            val win = window.attributes.screenBrightness
+            val frac = if (win >= 0f) win else runCatching {
+                Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS) / 255f
+            }.getOrDefault(0.5f)
+            return (frac.coerceIn(0f, 1f) * 100).roundToInt()
         }
     }
 
