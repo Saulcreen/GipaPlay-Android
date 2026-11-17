@@ -17,6 +17,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.Toast
 import kotlin.math.roundToInt
 
 class MainActivity : Activity() {
@@ -26,7 +27,11 @@ class MainActivity : Activity() {
           window.gipaBack = function(){
             try{
               if(typeof __fsActivo==='function' && __fsActivo()){ __fsSalir(); return true; }
-              if(typeof modal!=='undefined' && modal.classList.contains('open')){ cerrarModal(); return true; }
+              if(typeof modal!=='undefined' && modal.classList.contains('open')){
+                var b=document.getElementById('mBack');
+                if(b){ b.click(); } else { cerrarModal(); }
+                return true;
+              }
               if(typeof panelModo!=='undefined' && panelModo){ cerrarPanel(); marcarNav('home'); return true; }
             }catch(e){}
             return false;
@@ -36,6 +41,7 @@ class MainActivity : Activity() {
     private lateinit var webView: WebView
     private lateinit var root: FrameLayout
     private lateinit var audio: AudioManager
+    private var lastBackPress = 0L
     private var customView: View? = null
     private var customCallback: WebChromeClient.CustomViewCallback? = null
     private var oldUi = View.SYSTEM_UI_FLAG_VISIBLE
@@ -152,12 +158,20 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Android API")
     override fun onBackPressed() {
         if (customView != null) { hideCustomView(); return }
-        // Primero deja que la web cierre lo que tenga abierto (detalle, búsqueda/lista, pantalla completa simulada)
+        // 1) La web cierra lo que tenga abierto: reproductor -> ficha -> inicio (detalle, búsqueda/lista, pantalla completa simulada)
         webView.evaluateJavascript("(function(){return window.gipaBack ? window.gipaBack() : false;})()") { r ->
             when {
                 r == "true" -> Unit
                 webView.canGoBack() -> webView.goBack()
-                else -> finish()
+                else -> {
+                    // 2) Ya en el inicio: hay que presionar dos veces para salir
+                    val now = System.currentTimeMillis()
+                    if (now - lastBackPress < 2000) finish()
+                    else {
+                        lastBackPress = now
+                        Toast.makeText(this, "Presiona otra vez para salir", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
     }
